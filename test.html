@@ -1,1 +1,2104 @@
+<!-- PART 1: Replace your entire cbm.html with this (keeps the same interface + adds workflow gates) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>BDtradebot | Smart CBM Calculator & Container Optimizer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #006A4E;
+      --primary-light: #00875A;
+      --secondary: #475569;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #334155;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+      max-width:1200px;
+      margin:0 auto;
+      padding:20px;
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.6;
+    }
+    .navbar{
+      background:var(--card);
+      border-radius:12px;
+      padding:15px 25px;
+      margin-bottom:25px;
+      box-shadow:0 4px 12px rgba(0,0,0,.05);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:15px;
+    }
+    .nav-brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-weight:900;
+      font-size:20px;
+      color:var(--primary);
+    }
+    .nav-links{display:flex;gap:15px;flex-wrap:wrap}
+    .nav-link{
+      padding:8px 16px;border-radius:8px;text-decoration:none;
+      color:var(--secondary);font-weight:700;transition:.2s;border:2px solid transparent;
+    }
+    .nav-link:hover{background:#f0fdf4;border-color:#bbf7d0}
+    .nav-link.active{background:var(--primary);color:white}
+    .app-container{
+      background:var(--card);
+      border-radius:16px;
+      box-shadow:0 8px 30px rgba(0,0,0,.08);
+      overflow:hidden;
+      border:1px solid var(--border);
+      margin-bottom:30px;
+    }
+    .header{
+      background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);
+      color:#fff;padding:25px 30px;text-align:center;
+    }
+    .header h1{
+      margin:0;font-size:28px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:15px;flex-wrap:wrap;
+    }
+    .header p{margin:10px 0 0;opacity:.9;font-size:14px}
+    .main-content{padding:25px}
+    .tabs{
+      display:flex;gap:5px;margin-bottom:25px;border-bottom:2px solid var(--border);flex-wrap:wrap;
+    }
+    .tab{
+      padding:12px 24px;background:none;border:none;border-bottom:3px solid transparent;
+      font-weight:900;color:var(--secondary);cursor:pointer;transition:.2s;
+    }
+    .tab.active{color:var(--primary);border-bottom-color:var(--primary);background:#f0fdf4}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .section-card{
+      background:var(--card);
+      border:2px solid var(--border);
+      border-radius:12px;
+      padding:20px;
+      margin-bottom:20px;
+    }
+    .section-title{
+      font-weight:900;color:var(--primary);margin-bottom:15px;font-size:18px;
+      display:flex;align-items:center;gap:10px;
+    }
+    .input-grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:15px;
+      margin-bottom:15px;
+    }
+    @media (max-width:768px){.input-grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:480px){.input-grid{grid-template-columns:1fr}}
+    .input-group{display:flex;flex-direction:column}
+    .input-group.full{grid-column:span 2}
+    .input-label{
+      font-size:13px;color:#64748b;margin-bottom:6px;font-weight:900;
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .input-wrapper{position:relative}
+    .input-field, select.input-field, input[type="number"], input[type="text"]{
+      width:100%;
+      padding:14px !important;
+      border:2px solid var(--border);
+      border-radius:10px;
+      font-size:16px !important;
+      transition:.2s;
+      background:var(--card);
+      color:var(--text);
+      font-weight:700;
+      min-height:52px !important;
+      box-sizing:border-box;
+    }
+    .input-field:focus, select.input-field:focus, input[type="number"]:focus, input[type="text"]:focus{
+      border-color:var(--primary);
+      outline:none;
+      box-shadow:0 0 0 3px rgba(0,106,78,.12);
+    }
+    .input-unit{
+      position:absolute;right:14px;top:50%;transform:translateY(-50%);
+      color:#94a3b8;font-size:14px;pointer-events:none;font-weight:900;
+    }
+    .action-buttons{
+      display:flex;gap:12px;margin:25px 0;justify-content:center;flex-wrap:wrap;
+    }
+    .btn{
+      padding:14px 28px !important;border:none;border-radius:10px;font-size:16px !important;
+      font-weight:900;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      min-width:160px;min-height:52px !important;
+    }
+    .btn:disabled{opacity:0.6;cursor:not-allowed}
+    .btn-primary{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);color:#fff}
+    .btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,106,78,.2)}
+    .btn-secondary{background:var(--secondary);color:#fff}
+    .btn-success{background:var(--success);color:#fff}
+    .btn-warning{background:var(--warning);color:#fff}
+    .btn-danger{background:var(--danger);color:#fff}
+    .results-section{display:none;margin-top:20px;animation:fadeIn .4s ease-out}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .summary-stats{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin:20px 0;
+    }
+    @media (max-width:768px){.summary-stats{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:480px){.summary-stats{grid-template-columns:1fr}}
+    .stat-card{text-align:center;padding:15px;background:#f0fdf4;border-radius:10px}
+    .stat-card-value{font-size:24px;font-weight:900;color:var(--primary);margin-bottom:4px}
+    .stat-card-label{font-size:12px;color:#64748b;font-weight:700}
+    .chargeable-card{
+      background:#fff7ed;border:2px solid #fed7aa;border-radius:12px;padding:20px;margin:20px 0;
+    }
+    .chargeable-header{display:flex;align-items:center;gap:10px;margin-bottom:15px;color:#9a3412;font-weight:900}
+    .chargeable-comparison{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+    @media (max-width:768px){.chargeable-comparison{grid-template-columns:1fr}}
+    .spinner{
+      display:inline-block;width:20px;height:20px;border:2px solid rgba(255,255,255,.3);
+      border-radius:50%;border-top-color:#fff;animation:spin 1s ease-in-out infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @media (max-width:768px){
+      .navbar{flex-direction:column;text-align:center}
+      .nav-links{justify-content:center}
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="nav-brand">
+      <i class="fas fa-cube"></i>
+      <span>BDtradebot</span>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+      <a href="/cbm" class="nav-link active"><i class="fas fa-calculator"></i> CBM Calculator</a>
+      <a href="/hs-code" class="nav-link"><i class="fas fa-barcode"></i> HS Code</a>
+      <a href="/shipping" class="nav-link"><i class="fas fa-ship"></i> Shipping</a>
+      <a href="/documents" class="nav-link"><i class="fas fa-file-alt"></i> Documents</a>
+      <a href="/dashboard" class="nav-link"><i class="fas fa-chart-line"></i> Dashboard</a>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <div class="header">
+      <h1><i class="fas fa-calculator"></i> Smart CBM Calculator & Container Optimizer</h1>
+      <p>Calculate cargo volume, optimize container loading, and estimate shipping costs</p>
+    </div>
+
+    <div class="main-content">
+      <div class="tabs">
+        <button class="tab active" data-tab="calculator">📦 CBM Calculator</button>
+        <button class="tab" data-tab="optimization">🚢 Container Optimization</button>
+        <button class="tab" data-tab="shipping">✈️ Shipping Cost</button>
+      </div>
+
+      <div class="tab-content active" id="calculator">
+
+        <!-- NEW: Header Info (keeps interface style) -->
+        <div class="section-card" id="report-header">
+          <div class="section-title"><i class="fas fa-file-signature"></i> Report Information</div>
+          <div class="input-grid">
+            <div class="input-group full">
+              <label class="input-label"><span>Individual / Company Name (for PDF)</span></label>
+              <input type="text" id="report-name" class="input-field" placeholder="e.g. ABC Trading Ltd">
+            </div>
+            <div class="input-group full">
+              <label class="input-label"><span>Reference No (Optional)</span></label>
+              <input type="text" id="report-ref" class="input-field" placeholder="e.g. INV-2024-001">
+            </div>
+          </div>
+        </div>
+<div class="section-card" id="header-info-card">
+  <div class="section-title"><i class="fas fa-clipboard-list"></i> Header Info</div>
+  <div class="input-grid">
+    <div class="input-group">
+      <label class="input-label"><span>Dimensions Unit</span></label>
+      <select class="input-field" id="dimension-unit">
+        <option value="cm">Centimeters (cm)</option>
+        <option value="inch">Inches (in)</option>
+        <option value="mm">Millimeters (mm)</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label"><span>Weight Unit</span></label>
+      <select class="input-field" id="weight-unit">
+        <option value="kg">Kilograms (kg)</option>
+        <option value="lb">Pounds (lb)</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label"><span>Shipment Mode</span></label>
+      <select class="input-field" id="shipping-mode">
+        <option value="air">Air Freight</option>
+        <option value="sea" selected>Sea Freight</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label"><span>Fragile Items?</span></label>
+      <select class="input-field" id="fragile-mode">
+        <option value="no">No (Can rotate)</option>
+        <option value="yes">Yes (No rotation)</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="margin-top:8px;color:#64748b;font-size:12px;">
+    Rotation helps fill gaps and reduce filler usage. If fragile, rotation is disabled.
+  </div>
+</div>
+
+<!-- NOTE:
+- You ALREADY have a "Calculation Settings" section-card in your page with the same IDs:
+  dimension-unit, weight-unit, fragile-mode, shipping-mode.
+- Keep ONLY ONE set.
+- If you paste this block, REMOVE your old settings card (or vice-versa).
+- IDs must remain the same for JS to work.
+-->
+
+        <div class="section-card">
+          <div class="section-title"><i class="fas fa-box"></i> Box Details</div>
+          <div id="items-container"></div>
+          <div class="action-buttons">
+            <button class="btn btn-secondary" id="addBoxBtn"><i class="fas fa-plus"></i> Add Box Type</button>
+            <button class="btn btn-danger" id="clearBoxesBtn"><i class="fas fa-trash"></i> Clear All</button>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-title"><i class="fas fa-cog"></i> Calculation Settings</div>
+          <div class="input-grid">
+            <div class="input-group">
+              <label class="input-label"><span>Dimensions Unit</span></label>
+              <select class="input-field" id="dimension-unit">
+                <option value="cm">Centimeters (cm)</option>
+                <option value="inch">Inches (in)</option>
+                <option value="mm">Millimeters (mm)</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label class="input-label"><span>Weight Unit</span></label>
+              <select class="input-field" id="weight-unit">
+                <option value="kg">Kilograms (kg)</option>
+                <option value="lb">Pounds (lb)</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label class="input-label"><span>Fragile Items?</span></label>
+              <select class="input-field" id="fragile-mode">
+                <option value="no">No (Can rotate)</option>
+                <option value="yes">Yes (No rotation)</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label class="input-label"><span>Shipping Mode</span></label>
+              <select class="input-field" id="shipping-mode">
+                <option value="air">Air Freight</option>
+                <option value="sea" selected>Sea Freight</option>
+                <option value="road">Road Transport</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-primary" id="calculate-btn">
+            <i class="fas fa-rocket"></i> Calculate & Optimize
+          </button>
+        </div>
+      </div>
+
+      <div class="tab-content" id="optimization"><div class="section-card" id="sea-report-header-card" style="display:none;">
+  <div class="section-title"><i class="fas fa-id-card"></i> Report Header (Sea Only)</div>
+  <div class="input-grid">
+    <div class="input-group full">
+      <label class="input-label"><span>Individual / Company Name</span></label>
+      <input type="text" class="input-field" id="report-name" placeholder="e.g., ABC Trading Ltd / John Doe" />
+    </div>
+    <div class="input-group full">
+      <label class="input-label"><span>Reference (Optional)</span></label>
+      <input type="text" class="input-field" id="report-ref" placeholder="e.g., PO-123 / RFQ-77" />
+    </div>
+  </div>
+  <div style="color:#64748b;font-size:12px;">
+    This header will appear in the PDF report after you generate the load plan.
+  </div>
+</div>
+        <div class="results-section" id="optimization-results"></div>
+      </div>
+
+      <div class="tab-content" id="shipping">
+        <div class="section-card">
+          <div class="section-title"><i class="fas fa-money-bill-wave"></i> Shipping Cost Estimation</div>
+          <div id="shipping-results">
+            <p style="text-align:center;color:#64748b;padding:40px;">Calculate CBM first to see shipping cost estimation</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-title"><i class="fas fa-arrow-right"></i> Next Steps After Calculation</div>
+    <div class="next-steps">
+      <a href="/hs-code" class="step-card">
+        <div class="step-icon"><i class="fas fa-barcode"></i></div>
+        <div class="step-title">Find HS Codes</div>
+        <p>Get Bangladesh Customs codes and duty rates for your products</p>
+      </a>
+      <a href="/shipping" class="step-card">
+        <div class="step-icon"><i class="fas fa-ship"></i></div>
+        <div class="step-title">Check Shipping Rates</div>
+        <p>Compare rates from multiple shipping lines and freight forwarders</p>
+      </a>
+      <a href="/documents" class="step-card">
+        <div class="step-icon"><i class="fas fa-file-alt"></i></div>
+        <div class="step-title">Generate Documents</div>
+        <p>Create proforma invoices, packing lists, and other trade documents</p>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const CONTAINERS = {
+      "20ft": { cbm: 33, weightKg: 22000, label: "20-foot Standard", inner: { L: 5.90, W: 2.35, H: 2.39 } },
+      "40ft": { cbm: 67, weightKg: 27000, label: "40-foot Standard", inner: { L: 12.03, W: 2.35, H: 2.39 } },
+      "40hq": { cbm: 76, weightKg: 27000, label: "40-foot High Cube", inner: { L: 12.03, W: 2.35, H: 2.69 } }
+    };
+
+    const VOLUMETRIC_FACTOR = { air: 166.667, sea: 1000, road: 333.333 };
+
+    let boxes = [];
+    let currentResults = null;
+
+    let calculationDone = false;
+    let loadPlanGenerated = false;
+
+    document.addEventListener('DOMContentLoaded', () => initializeApp());
+
+    function initializeApp() {
+      addBox();
+      document.getElementById('addBoxBtn').addEventListener('click', () => addBox());
+      document.getElementById('clearBoxesBtn').addEventListener('click', () => clearBoxes());
+      document.getElementById('calculate-btn').addEventListener('click', () => calculateAndOptimize());
+
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+      });
+
+      document.getElementById('dimension-unit').addEventListener('change', renderBoxes);
+      document.getElementById('weight-unit').addEventListener('change', renderBoxes);
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+
+      if (tabId === 'optimization' && currentResults) {
+        renderOptimizationResults(currentResults.optimizations, currentResults.totals, currentResults.chargeable);
+      }
+      if (tabId === 'shipping' && currentResults) {
+        renderShippingEstimation(currentResults.chargeable, currentResults.settings.shippingMode);
+      }
+    }
+
+    function addBox() {
+      const newId = boxes.length > 0 ? boxes[boxes.length - 1].id + 1 : 1;
+      boxes.push({ id: newId, length: '50', width: '40', height: '30', quantity: 1, weight: '10', description: '' });
+      renderBoxes();
+    }
+
+    function removeBox(id) {
+      if (boxes.length <= 1) return alert('You need at least one box type');
+      boxes = boxes.filter(box => box.id !== id);
+      renderBoxes();
+    }
+
+    function clearBoxes() {
+      if (!confirm('Clear all boxes?')) return;
+      boxes = [{ id: 1, length: '50', width: '40', height: '30', quantity: 1, weight: '10', description: '' }];
+      renderBoxes();
+    }
+
+    function updateBox(id, field, value) {
+      const box = boxes.find(b => b.id === id);
+      if (box) box[field] = value;
+    }
+
+    function renderBoxes() {
+      const container = document.getElementById('items-container');
+      const dimUnit = document.getElementById('dimension-unit').value;
+      const weightUnit = document.getElementById('weight-unit').value;
+
+      container.innerHTML = boxes.map(box => `
+        <div class="section-card box-item" data-id="${box.id}" style="margin-bottom: 20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+            <div class="section-title" style="margin:0;"><i class="fas fa-box"></i> Box Type #${box.id}</div>
+            ${boxes.length > 1 ? `
+              <button class="btn btn-danger remove-box-btn" data-id="${box.id}" style="padding:12px 16px;font-size:14px;min-height:48px;">
+                <i class="fas fa-trash"></i> Remove
+              </button>` : ''}
+          </div>
+
+          <div class="input-grid">
+            <div class="input-group">
+              <label class="input-label"><span>Length</span></label>
+              <div class="input-wrapper">
+                <input type="number" class="box-length" data-id="${box.id}" value="${box.length}" step="0.1" min="0.1" inputmode="decimal">
+                <span class="input-unit">${dimUnit}</span>
+              </div>
+            </div>
+            <div class="input-group">
+              <label class="input-label"><span>Width</span></label>
+              <div class="input-wrapper">
+                <input type="number" class="box-width" data-id="${box.id}" value="${box.width}" step="0.1" min="0.1" inputmode="decimal">
+                <span class="input-unit">${dimUnit}</span>
+              </div>
+            </div>
+            <div class="input-group">
+              <label class="input-label"><span>Height</span></label>
+              <div class="input-wrapper">
+                <input type="number" class="box-height" data-id="${box.id}" value="${box.height}" step="0.1" min="0.1" inputmode="decimal">
+                <span class="input-unit">${dimUnit}</span>
+              </div>
+            </div>
+            <div class="input-group">
+              <label class="input-label"><span>Quantity</span></label>
+              <div class="input-wrapper">
+                <input type="number" class="box-quantity" data-id="${box.id}" value="${box.quantity}" min="1" step="1" inputmode="numeric">
+                <span class="input-unit">pcs</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-grid">
+            <div class="input-group full">
+              <label class="input-label"><span>Weight per Box</span></label>
+              <div class="input-wrapper">
+                <input type="number" class="box-weight" data-id="${box.id}" value="${box.weight}" step="0.1" min="0" inputmode="decimal">
+                <span class="input-unit">${weightUnit}</span>
+              </div>
+            </div>
+            <div class="input-group full">
+              <label class="input-label"><span>Product Description (Optional)</span></label>
+              <input type="text" class="box-description" data-id="${box.id}" value="${box.description || ''}">
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.box-length').forEach(input => input.addEventListener('input', e => updateBox(+e.target.dataset.id,'length',e.target.value)));
+      document.querySelectorAll('.box-width').forEach(input => input.addEventListener('input', e => updateBox(+e.target.dataset.id,'width',e.target.value)));
+      document.querySelectorAll('.box-height').forEach(input => input.addEventListener('input', e => updateBox(+e.target.dataset.id,'height',e.target.value)));
+      document.querySelectorAll('.box-quantity').forEach(input => input.addEventListener('input', e => updateBox(+e.target.dataset.id,'quantity',parseInt(e.target.value)||1)));
+      document.querySelectorAll('.box-weight').forEach(input => input.addEventListener('input', e => updateBox(+e.target.dataset.id,'weight',e.target.value)));
+      document.querySelectorAll('.box-description').forEach(input => input.addEventListener('input', e => updateBox(+e.target.dataset.id,'description',e.target.value)));
+
+      document.querySelectorAll('.remove-box-btn').forEach(btn => btn.addEventListener('click', e => removeBox(+e.target.closest('button').dataset.id)));
+    }
+
+    async function calculateAndOptimize() {
+      if (!validateInputs()) return;
+
+      const calculateBtn = document.getElementById('calculate-btn');
+      const originalText = calculateBtn.innerHTML;
+      calculateBtn.innerHTML = '<span class="spinner"></span> Calculating...';
+      calculateBtn.disabled = true;
+
+      try {
+        const dimUnit = document.getElementById('dimension-unit').value;
+        const weightUnit = document.getElementById('weight-unit').value;
+        const fragileMode = document.getElementById('fragile-mode').value;
+        const shippingMode = document.getElementById('shipping-mode').value;
+
+        const standardizedBoxes = boxes.map(box => {
+          let lengthM = parseFloat(box.length) || 0;
+          let widthM  = parseFloat(box.width)  || 0;
+          let heightM = parseFloat(box.height) || 0;
+
+          if (dimUnit === 'cm') { lengthM/=100; widthM/=100; heightM/=100; }
+          else if (dimUnit === 'mm') { lengthM/=1000; widthM/=1000; heightM/=1000; }
+          else if (dimUnit === 'inch') { lengthM*=0.0254; widthM*=0.0254; heightM*=0.0254; }
+
+          let weightKg = parseFloat(box.weight) || 0;
+          if (weightUnit === 'lb') weightKg *= 0.453592;
+
+          const quantity = parseInt(box.quantity) || 1;
+
+          return {
+            id: box.id,
+            length: lengthM,
+            width: widthM,
+            height: heightM,
+            weight: weightKg,
+            quantity,
+            volume: lengthM * widthM * heightM,
+            description: box.description || `Box Type #${box.id}`
+          };
+        });
+
+        const totals = calculateTotals(standardizedBoxes);
+        const optimizations = findOptimalContainersSimple(totals);
+        const chargeable = calculateChargeableWeight(totals, shippingMode);
+
+        currentResults = {
+          boxes: standardizedBoxes,
+          totals,
+          optimizations,
+          chargeable,
+          settings: { dimUnit, weightUnit, fragileMode, shippingMode },
+          report: { name: document.getElementById('report-name').value.trim(), ref: document.getElementById('report-ref').value.trim() },
+          timestamp: new Date().toLocaleString()
+        };
+
+        calculationDone = true;
+        loadPlanGenerated = false;
+
+        renderOptimizationResults(optimizations, totals, chargeable);
+        renderShippingEstimation(chargeable, shippingMode);
+
+        // Stay on calculator tab (do not auto-jump)
+        alert("Calculation completed. Review summary in 'Container Optimization' or 'Shipping Cost' tab.");
+
+      } catch (error) {
+        console.error('Calculation error:', error);
+        alert('Error during calculation. Please check your inputs: ' + error.message);
+      } finally {
+        calculateBtn.innerHTML = originalText;
+        calculateBtn.disabled = false;
+      }
+    }
+
+    function validateInputs() {
+      for (const box of boxes) {
+        if (!box.length || parseFloat(box.length) <= 0) return alert(`Please enter length for Box Type #${box.id}`), false;
+        if (!box.width  || parseFloat(box.width)  <= 0) return alert(`Please enter width for Box Type #${box.id}`), false;
+        if (!box.height || parseFloat(box.height) <= 0) return alert(`Please enter height for Box Type #${box.id}`), false;
+        if (!box.quantity || parseInt(box.quantity) <= 0) return alert(`Please enter quantity for Box Type #${box.id}`), false;
+      }
+      return true;
+    }
+
+    function calculateTotals(boxesStd) {
+      let totalCBM = 0, totalWeight = 0, totalBoxes = 0;
+      boxesStd.forEach(b => { totalCBM += b.volume*b.quantity; totalWeight += b.weight*b.quantity; totalBoxes += b.quantity; });
+      return { totalCBM: +totalCBM.toFixed(3), totalWeight: +totalWeight.toFixed(2), totalBoxes };
+    }
+
+    function findOptimalContainersSimple(totals) {
+      const options = [];
+      Object.keys(CONTAINERS).forEach(containerType => {
+        const c = CONTAINERS[containerType];
+        const containersNeeded = Math.ceil(totals.totalCBM / c.cbm);
+        if (containersNeeded <= 10) {
+          const efficiency = (totals.totalCBM / (c.cbm * containersNeeded)) * 100;
+          options.push({
+            containerType,
+            containerCount: containersNeeded,
+            efficiency: Math.round(efficiency),
+            totalCBM: totals.totalCBM,
+            containerCBM: c.cbm,
+            unusedCBM: (c.cbm * containersNeeded) - totals.totalCBM
+          });
+        }
+      });
+      options.sort((a,b)=> b.efficiency-a.efficiency || a.containerCount-b.containerCount);
+      return options.slice(0,3);
+    }
+
+    function calculateChargeableWeight(totals, shippingMode) {
+      const factor = VOLUMETRIC_FACTOR[shippingMode] || 0;
+      const volumetricWeight = totals.totalCBM * factor;
+      const actualWeight = totals.totalWeight;
+      const chargeableWeight = Math.max(volumetricWeight, actualWeight);
+      const weightType = volumetricWeight > actualWeight ? 'volumetric' : 'actual';
+      return {
+        volumetricWeight: +volumetricWeight.toFixed(2),
+        actualWeight: +actualWeight.toFixed(2),
+        chargeableWeight: +chargeableWeight.toFixed(2),
+        weightType,
+        difference: +Math.abs(volumetricWeight-actualWeight).toFixed(2)
+      };
+    }
+
+    function renderOptimizationResults(optimizations, totals, chargeable) {
+      const container = document.getElementById('optimization-results');
+      const shippingMode = document.getElementById('shipping-mode').value;
+
+      // AIR: show chargeable only; no container & no plan
+      if (shippingMode === 'air') {
+        container.innerHTML = `
+          <div class="section-card">
+            <div class="section-title"><i class="fas fa-plane"></i> Air Shipment Summary</div>
+            <div class="summary-stats">
+              <div class="stat-card"><div class="stat-card-value">${totals.totalCBM}</div><div class="stat-card-label">Total CBM (m³)</div></div>
+              <div class="stat-card"><div class="stat-card-value">${totals.totalWeight}</div><div class="stat-card-label">Total Weight (kg)</div></div>
+              <div class="stat-card"><div class="stat-card-value">${chargeable.volumetricWeight}</div><div class="stat-card-label">Volumetric (kg)</div></div>
+              <div class="stat-card"><div class="stat-card-value">${chargeable.chargeableWeight}</div><div class="stat-card-label">Chargeable (kg)</div></div>
+            </div>
+            <div style="margin-top:10px;color:#92400e;">
+              Container loading plan is not applicable for air shipment.
+            </div>
+          </div>
+        `;
+        container.style.display = 'block';
+        return;
+      }
+
+      // SEA/ROAD: show basic summary + (placeholder) container count by CBM for now
+      const best = optimizations?.[0];
+      const bestText = best ? `${best.containerCount} × ${CONTAINERS[best.containerType].label}` : 'N/A';
+
+      container.innerHTML = `
+        <div class="section-card">
+          <div class="section-title"><i class="fas fa-chart-bar"></i> Summary</div>
+          <div class="summary-stats">
+            <div class="stat-card"><div class="stat-card-value">${totals.totalCBM}</div><div class="stat-card-label">Total CBM (m³)</div></div>
+            <div class="stat-card"><div class="stat-card-value">${totals.totalWeight}</div><div class="stat-card-label">Total Weight (kg)</div></div>
+            <div class="stat-card"><div class="stat-card-value">${totals.totalBoxes}</div><div class="stat-card-label">Total Boxes</div></div>
+            <div class="stat-card"><div class="stat-card-value">${best ? best.containerCount : '-'}</div><div class="stat-card-label">Containers (Temp)</div></div>
+          </div>
+          <div style="margin-top:10px;color:#64748b;">
+            Recommended (temp by CBM): <strong>${bestText}</strong>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-success" id="generatePlanBtn">
+            <i class="fas fa-th-large"></i> Generate Container Loading Plan
+          </button>
+        </div>
+      `;
+
+      container.style.display = 'block';
+
+      document.getElementById('generatePlanBtn').addEventListener('click', () => {
+        // Part 3 will implement this fully
+        alert("Load plan engine comes in PART 2+3. Paste next parts.");
+      });
+    }
+
+    function renderShippingEstimation(chargeable, shippingMode) {
+      const container = document.getElementById('shipping-results');
+
+      if (shippingMode === 'air' || shippingMode === 'sea') {
+        container.innerHTML = `
+          <div class="chargeable-card">
+            <div class="chargeable-header">
+              <i class="fas fa-weight-hanging"></i>
+              <span>Chargeable Weight (${shippingMode.toUpperCase()})</span>
+            </div>
+            <div class="chargeable-comparison">
+              <div style="text-align:center;padding:15px;background:#fff;border-radius:8px;">
+                <div style="font-size:20px;font-weight:900;color:#ea580c;">${chargeable.actualWeight} kg</div>
+                <div style="font-size:12px;color:#64748b;">Actual Weight</div>
+              </div>
+              <div style="text-align:center;padding:15px;background:#fff;border-radius:8px;">
+                <div style="font-size:20px;font-weight:900;color:#ea580c;">${chargeable.volumetricWeight} kg</div>
+                <div style="font-size:12px;color:#64748b;">Volumetric Weight</div>
+              </div>
+              <div style="text-align:center;padding:15px;background:#fb923c;border-radius:8px;color:white;">
+                <div style="font-size:20px;font-weight:900;">${chargeable.chargeableWeight} kg</div>
+                <div style="font-size:12px;">Chargeable Weight</div>
+                <small style="font-size:10px;">(${chargeable.weightType})</small>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="section-card">
+          <div class="section-title"><i class="fas fa-truck"></i> Road Transport</div>
+          <p style="color:#64748b;">Chargeable weight rules can vary by carrier. (Will be added later.)</p>
+        </div>
+      `;
+    }
+  </script>
+
+<!-- PART 2: Paste this AFTER PART 1's </html> ONLY IF you are splitting into files.
+     If you keep single-file cbm.html, DO THIS INSTEAD:
+     1) In PART 1, find the existing <script> ... </script>
+     2) Paste EVERYTHING from this PART 2 inside the SAME <script> block, at the VERY END (before </script>)
+-->
+
+<script>
+/* ===========================
+   PART 2: Mixed-box optimizer + load-plan UI + PDF export plumbing
+   - Keeps interface (no layout changes)
+   - Adds: numeric hard-block, plan generator, rotation rules (fragile=no rotation), and PDF button (uses html2pdf if present)
+   =========================== */
+
+/* ---------- HARD BLOCK letters in numeric fields (prevents e, +, -, etc.) ---------- */
+(function enforceNumericOnly(){
+  const blockedKeys = new Set(['e','E','+','-']);
+  document.addEventListener('keydown', (ev) => {
+    const t = ev.target;
+    if (!(t instanceof HTMLInputElement)) return;
+    if (t.type !== 'number') return;
+    if (blockedKeys.has(ev.key)) ev.preventDefault();
+  });
+})();
+
+/* ---------- Container specs in meters ---------- */
+function getContainerSpec(type){
+  const c = CONTAINERS[type];
+  if (!c) throw new Error("Unknown container type");
+  return {
+    type,
+    label: c.label,
+    L: c.inner.L,
+    W: c.inner.W,
+    H: c.inner.H
+  };
+}
+
+/* ---------- Build individual box items list (expanded by quantity) with rotation policy ---------- */
+function buildItemList(stdBoxes){
+  const fragileMode = document.getElementById('fragile-mode').value; // 'yes' => no rotation
+  const canRotate = (fragileMode !== 'yes');
+  const items = [];
+  for (const b of stdBoxes) {
+    for (let i=0;i<b.quantity;i++){
+      items.push({
+        boxTypeId: b.id,
+        desc: b.description || `Box Type #${b.id}`,
+        L: b.length,
+        W: b.width,
+        H: b.height,
+        weightKg: b.weight,
+        canRotate,
+      });
+    }
+  }
+  // sort biggest-first (volume then max edge)
+  items.sort((a,b)=>{
+    const va=a.L*a.W*a.H, vb=b.L*b.W*b.H;
+    if (vb!==va) return vb-va;
+    const ma=Math.max(a.L,a.W,a.H), mb=Math.max(b.L,b.W,b.H);
+    return mb-ma;
+  });
+  return items;
+}
+
+/* ---------- Generate candidate orientations (rotation) ---------- */
+function orientations(item){
+  const base = [
+    {L:item.L, W:item.W, H:item.H, rot:"0°"},
+  ];
+  if (!item.canRotate) return base;
+
+  // 90° rotations (swap dimensions)
+  const perms = [
+    {L:item.L, W:item.H, H:item.W, rot:"Rotate (W↔H)"},
+    {L:item.W, W:item.L, H:item.H, rot:"Rotate (L↔W)"},
+    {L:item.W, W:item.H, H:item.L, rot:"Rotate (L→H)"},
+    {L:item.H, W:item.L, H:item.W, rot:"Rotate (H→W)"},
+    {L:item.H, W:item.W, H:item.L, rot:"Rotate (H↔L)"},
+  ];
+  // de-dup near identical
+  const seen = new Set();
+  const out = [];
+  for (const o of base.concat(perms)){
+    const k = `${o.L.toFixed(4)}|${o.W.toFixed(4)}|${o.H.toFixed(4)}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(o);
+  }
+  return out;
+}
+
+/* ---------- Simple fast 3D-ish packing: "rows (length) × columns (width) × layers (height)" heuristic ----------
+   We do NOT render huge grids (keeps browser fast).
+   Goal: ensure all boxes assigned to some container; find minimum containers.
+*/
+function packIntoContainers(items, containerType){
+  const spec = getContainerSpec(containerType);
+
+  // Each container has layers; each layer has rows; each row has remaining length segments per column-band
+  // Heuristic: fill a "floor layer" by slicing width into bands (columns), within each band place along length.
+  // If item doesn't fit in current layer, open new layer; if doesn't fit any layer, open new container.
+
+  const containers = [];
+  function newContainer(){
+    return { spec, usedVolume:0, layers:[], placements:[] };
+  }
+  function newLayer(){
+    return { heightUsed:0, bands:[] };
+  }
+  function newBand(bandWidth){
+    return { bandWidth, rows: [{ lengthUsed:0, height:0, items:[] }] };
+  }
+
+  function tryPlaceInContainer(cont, item){
+    // try every layer
+    for (let li=0; li<cont.layers.length; li++){
+      const layer = cont.layers[li];
+      // layer height must allow item height
+      // (we treat layer height as max of items in that layer; new item may increase it if still <= spec.H)
+      for (const ori of orientations(item)){
+        const nextLayerHeight = Math.max(layer.heightUsed, ori.H);
+        if (nextLayerHeight > spec.H) continue;
+
+        // try existing bands
+        for (let bi=0; bi<layer.bands.length; bi++){
+          const band = layer.bands[bi];
+          if (ori.W > band.bandWidth) continue;
+
+          // try existing rows in band
+          for (let ri=0; ri<band.rows.length; ri++){
+            const row = band.rows[ri];
+            const rowHeight = Math.max(row.height, ori.H);
+            const canHeight = Math.max(layer.heightUsed, rowHeight) <= spec.H;
+            if (!canHeight) continue;
+
+            if (row.lengthUsed + ori.L <= spec.L){
+              // place in this row
+              const x = row.lengthUsed;
+              const y = band._yStart || 0; // computed later
+              const z = cont._zStart || 0; // computed later
+              row.items.push({ ...item, ...ori, x, y, z, layer:li, band:bi, row:ri });
+              row.lengthUsed += ori.L;
+              row.height = rowHeight;
+              layer.heightUsed = Math.max(layer.heightUsed, rowHeight);
+              cont.usedVolume += ori.L*ori.W*ori.H;
+              return true;
+            }
+          }
+
+          // try new row in band (stack along width? row uses same band width; just new row if width doesn't change; length resets)
+          // Only if there is spare width in band? rows are along length, so width is fixed by band.
+          // Add another row only makes sense if we treat rows stacked in width, but band already represents width segment.
+          // So we keep a single row per band to stay fast.
+        }
+
+        // create a new band if spare width
+        const usedWidth = layer.bands.reduce((s,b)=>s+b.bandWidth,0);
+        if (usedWidth + ori.W <= spec.W){
+          const band = newBand(ori.W);
+          layer.bands.push(band);
+          // place at start of row
+          band.rows[0].items.push({ ...item, ...ori, x:0, y:usedWidth, z:0, layer:li, band:layer.bands.length-1, row:0 });
+          band.rows[0].lengthUsed = ori.L;
+          band.rows[0].height = ori.H;
+          layer.heightUsed = Math.max(layer.heightUsed, ori.H);
+          cont.usedVolume += ori.L*ori.W*ori.H;
+          return true;
+        }
+      }
+    }
+
+    // try new layer if height available
+    for (const ori of orientations(item)){
+      const currentHeight = cont.layers.reduce((s,l)=>s+l.heightUsed,0);
+      if (currentHeight + ori.H > spec.H) continue;
+
+      const layer = newLayer();
+      layer.heightUsed = ori.H;
+      layer.bands.push(newBand(Math.min(ori.W, spec.W)));
+      // place into first band
+      layer.bands[0].rows[0].items.push({ ...item, ...ori, x:0, y:0, z:currentHeight, layer:cont.layers.length, band:0, row:0 });
+      layer.bands[0].rows[0].lengthUsed = ori.L;
+      layer.bands[0].rows[0].height = ori.H;
+
+      cont.layers.push(layer);
+      cont.usedVolume += ori.L*ori.W*ori.H;
+      return true;
+    }
+
+    return false;
+  }
+
+  // main loop
+  for (const item of items){
+    let placed = false;
+    // try existing containers first
+    for (const cont of containers){
+      if (tryPlaceInContainer(cont, item)) { placed=true; break; }
+    }
+    if (!placed){
+      const cont = newContainer();
+      cont.layers.push(newLayer()); // start with one empty layer
+      if (!tryPlaceInContainer(cont, item)){
+        // cannot fit item at all
+        return { ok:false, reason:`Item does not fit in ${spec.label} (check dimensions)`, containers:[] };
+      }
+      containers.push(cont);
+    }
+  }
+
+  // derive utilization
+  const totalCapVol = containers.length * (spec.L*spec.W*spec.H);
+  const usedVol = containers.reduce((s,c)=>s+c.usedVolume,0);
+  const utilization = totalCapVol > 0 ? (usedVol/totalCapVol)*100 : 0;
+
+  return { ok:true, containers, utilization: Math.round(utilization) };
+}
+
+/* ---------- Determine best container plan for SEA (min containers, then best utilization) ---------- */
+function computeBestSeaPlan(stdBoxes){
+  const items = buildItemList(stdBoxes);
+
+  const candidates = ["20ft","40ft","40hq"].map(t=>{
+    const packed = packIntoContainers(items, t);
+    if (!packed.ok) return null;
+    return {
+      type: t,
+      label: CONTAINERS[t].label,
+      count: packed.containers.length,
+      utilization: packed.utilization,
+      packed
+    };
+  }).filter(Boolean);
+
+  if (!candidates.length) return { ok:false, reason:"No container type can fit your boxes. Check dimensions." };
+
+  candidates.sort((a,b)=>{
+    if (a.count !== b.count) return a.count - b.count;       // fewer containers first
+    return b.utilization - a.utilization;                    // then higher utilization
+  });
+
+  return { ok:true, best: candidates[0], all:candidates };
+}
+
+/* ---------- Hook: replace the placeholder Generate Plan button behavior ---------- */
+(function hookGeneratePlan(){
+  // Monkey patch renderOptimizationResults to keep your UI but add real plan
+  const original = window.renderOptimizationResults;
+  window.renderOptimizationResults = function(optimizations, totals, chargeable){
+    original(optimizations, totals, chargeable);
+
+    const shippingMode = document.getElementById('shipping-mode').value;
+    if (shippingMode !== 'sea') return;
+
+    // After original renders, attach real generator
+    const btn = document.getElementById('generatePlanBtn');
+    if (!btn) return;
+
+    btn.onclick = () => {
+      if (!currentResults?.boxes) return alert("Please calculate first.");
+      const plan = computeBestSeaPlan(currentResults.boxes);
+      if (!plan.ok) return alert(plan.reason);
+
+      currentResults.loadPlan = plan.best;
+      loadPlanGenerated = true;
+
+      // Render plan summary + export button (no huge tables)
+      const wrap = document.getElementById('optimization-results');
+      const best = plan.best;
+
+      const reportName = (currentResults.report?.name || "").trim();
+      const reportRef  = (currentResults.report?.ref || "").trim();
+
+      wrap.innerHTML += `
+        <div class="section-card" id="load-plan-card">
+          <div class="section-title"><i class="fas fa-th-large"></i> Container Loading Plan (Mixed Boxes)</div>
+
+          <div style="color:#64748b;margin-bottom:10px;">
+            <strong>Selected:</strong> ${best.count} × ${best.label}
+            &nbsp; | &nbsp; <strong>Utilization:</strong> ${best.utilization}%
+            &nbsp; | &nbsp; <strong>Rotation:</strong> ${document.getElementById('fragile-mode').value==='yes' ? 'Disabled' : 'Enabled'}
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+            <div style="padding:12px;border:1px solid var(--border);border-radius:10px;background:#f8fafc;">
+              <div style="font-weight:900;color:var(--primary);">Report Name</div>
+              <div style="color:#64748b;">${escapeHtml(reportName || '—')}</div>
+            </div>
+            <div style="padding:12px;border:1px solid var(--border);border-radius:10px;background:#f8fafc;">
+              <div style="font-weight:900;color:var(--primary);">Reference</div>
+              <div style="color:#64748b;">${escapeHtml(reportRef || '—')}</div>
+            </div>
+            <div style="padding:12px;border:1px solid var(--border);border-radius:10px;background:#f8fafc;">
+              <div style="font-weight:900;color:var(--primary);">Generated</div>
+              <div style="color:#64748b;">${escapeHtml(currentResults.timestamp || '')}</div>
+            </div>
+          </div>
+
+          <div style="margin-top:15px;color:#64748b;">
+            Plan details are summarized (fast). Full visualization can be added later without slowing the browser.
+          </div>
+
+          <div class="action-buttons" style="margin-top:15px;">
+            <button class="btn btn-warning" id="exportPdfBtn">
+              <i class="fas fa-file-pdf"></i> Export Report (PDF)
+            </button>
+          </div>
+          <div id="pdfHint" style="text-align:center;color:#64748b;font-size:12px;"></div>
+        </div>
+      `;
+
+      document.getElementById('exportPdfBtn').onclick = () => exportReportPDF();
+      switchTab('optimization');
+    };
+  }
+})();
+
+/* ---------- PDF Export (expects html2pdf present; if not, shows hint) ---------- */
+function exportReportPDF(){
+  if (!currentResults) return alert("Please calculate first.");
+  if (!loadPlanGenerated) return alert("Generate load plan first.");
+
+  const node = document.getElementById('load-plan-card');
+  if (!node) return alert("Load plan block not found.");
+
+  const hint = document.getElementById('pdfHint');
+  if (typeof html2pdf !== 'function') {
+    if (hint) {
+      hint.innerHTML = `
+        html2pdf not detected. Add in your HTML (before </body>):<br>
+        &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"&gt;&lt;/script&gt;
+      `;
+    }
+    return alert("PDF library missing (html2pdf). Add the script tag shown under the button.");
+  }
+
+  const name = (currentResults.report?.name || "BDtradebot_Report").replace(/[^\w\-]+/g,'_');
+  const ref  = (currentResults.report?.ref  || "").replace(/[^\w\-]+/g,'_');
+  const file = ref ? `${name}_${ref}.pdf` : `${name}.pdf`;
+
+  const opt = {
+    margin: 10,
+    filename: file,
+    image: { type: 'jpeg', quality: 0.92 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(node).save();
+}
+
+/* ---------- helpers ---------- */
+function escapeHtml(s){
+  return String(s || '').replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+}
+</script>
+<!-- PART 3: Paste this at the VERY END of your existing <script> block (after Part 2),
+     OR append as a new <script> just before </body>.
+     This adds: Header Info questions (name/ref), SEA/AIR behavior rules, and the "Calculate -> show only totals+containers -> then Load Plan button" flow.
+-->
+
+<script>
+/* ===========================
+   PART 3: Flow rules + header questions + SEA/AIR gating
+   - No UI layout change (same cards/styles)
+   - Before box details: ask report header (Name/Ref)
+   - Calculate:
+      - always show Total Weight + Total CBM
+      - if AIR: show chargeable weight (air only), hide container count and hide load plan button
+      - if SEA: show required containers (based on packing, not only CBM), show "Generate Load Plan" button
+   =========================== */
+
+// shared flags
+window.loadPlanGenerated = false;
+
+// ensure report header state exists
+function ensureReportState(){
+  if (!currentResults) currentResults = {};
+  if (!currentResults.report) currentResults.report = { name:"", ref:"" };
+}
+
+// Inject "Header info" section ABOVE Box Details without changing overall theme
+(function addHeaderInfoSection(){
+  const calcTab = document.getElementById('calculator');
+  if (!calcTab) return;
+
+  // find first section-card inside calculator tab (Box Details)
+  const firstCard = calcTab.querySelector('.section-card');
+  if (!firstCard) return;
+
+  // create new section
+  const headerCard = document.createElement('div');
+  headerCard.className = 'section-card';
+  headerCard.id = 'report-header-card';
+  headerCard.innerHTML = `
+    <div class="section-title"><i class="fas fa-id-card"></i> Header Info (For PDF Report)</div>
+    <div class="input-grid">
+      <div class="input-group full">
+        <label class="input-label"><span>Individual / Company Name</span></label>
+        <input type="text" class="input-field" id="report-name" placeholder="e.g., ABC Trading / Md Zahidul" value="">
+      </div>
+      <div class="input-group full">
+        <label class="input-label"><span>Reference (Optional)</span></label>
+        <input type="text" class="input-field" id="report-ref" placeholder="e.g., PO-123 / INV-55" value="">
+      </div>
+    </div>
+    <div style="color:#64748b;font-size:12px;">
+      This info will appear on the load plan report and PDF export.
+    </div>
+  `;
+
+  calcTab.insertBefore(headerCard, firstCard);
+
+  // store on change
+  const nameEl = headerCard.querySelector('#report-name');
+  const refEl  = headerCard.querySelector('#report-ref');
+  const save = () => {
+    ensureReportState();
+    currentResults.report.name = nameEl.value || "";
+    currentResults.report.ref  = refEl.value || "";
+  };
+  nameEl.addEventListener('input', save);
+  refEl.addEventListener('input', save);
+})();
+
+/* Override main calculate flow:
+   - compute totals
+   - if AIR: show chargeable(air) in Optimization tab, but no containers, no plan
+   - if SEA: compute container count via packing (min containers), show only count + totals; show button for load plan
+*/
+(function overrideCalculateFlow(){
+  const originalCalc = window.calculateAndOptimize;
+  if (typeof originalCalc !== 'function') return;
+
+  window.calculateAndOptimize = async function(){
+    // validate using existing validation
+    if (!validateInputs()) return;
+
+    const btn = document.getElementById('calculate-btn');
+    const old = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner"></span> Calculating...';
+    btn.disabled = true;
+
+    try{
+      // read header info
+      ensureReportState();
+      const nameEl = document.getElementById('report-name');
+      const refEl  = document.getElementById('report-ref');
+      currentResults.report.name = (nameEl?.value || "").trim();
+      currentResults.report.ref  = (refEl?.value || "").trim();
+
+      const dimUnit = document.getElementById('dimension-unit').value;
+      const weightUnit = document.getElementById('weight-unit').value;
+      const shippingMode = document.getElementById('shipping-mode').value;
+
+      // build standardized boxes (same logic as your last file)
+      const standardizedBoxes = boxes.map(box => {
+        let lengthM = parseFloat(box.length) || 0;
+        let widthM  = parseFloat(box.width)  || 0;
+        let heightM = parseFloat(box.height) || 0;
+
+        if (dimUnit === 'cm') { lengthM/=100; widthM/=100; heightM/=100; }
+        else if (dimUnit === 'mm') { lengthM/=1000; widthM/=1000; heightM/=1000; }
+        else if (dimUnit === 'inch') { lengthM*=0.0254; widthM*=0.0254; heightM*=0.0254; }
+
+        let weightKg = parseFloat(box.weight) || 0;
+        if (weightUnit === 'lb') weightKg *= 0.453592;
+
+        const quantity = parseInt(box.quantity) || 1;
+
+        return {
+          id: box.id,
+          length: lengthM,
+          width:  widthM,
+          height: heightM,
+          weight: weightKg,
+          quantity,
+          volume: lengthM * widthM * heightM,
+          description: box.description || `Box Type #${box.id}`
+        };
+      });
+
+      const totals = calculateTotals(standardizedBoxes);
+
+      // AIR: only chargeable + totals (no container stuff)
+      if (shippingMode === 'air'){
+        const chargeable = calculateChargeableWeight(totals, 'air');
+        currentResults = {
+          ...currentResults,
+          boxes: standardizedBoxes,
+          totals,
+          chargeable,
+          settings: { dimUnit, weightUnit, shippingMode },
+          timestamp: new Date().toLocaleString()
+        };
+        loadPlanGenerated = false;
+
+        renderAirSummaryOnly(totals, chargeable);
+        renderShippingEstimation(chargeable, 'air');
+        switchTab('optimization');
+        return;
+      }
+
+      // SEA: compute container count by packing (min containers)
+      if (shippingMode === 'sea'){
+        const seaPlan = computeBestSeaPlan(standardizedBoxes);
+        if (!seaPlan.ok) throw new Error(seaPlan.reason);
+
+        const best = seaPlan.best;
+        const chargeableSea = calculateChargeableWeight(totals, 'sea'); // you can keep for info if needed
+        currentResults = {
+          ...currentResults,
+          boxes: standardizedBoxes,
+          totals,
+          chargeable: chargeableSea,
+          optimizations: seaPlan.all.map(x=>({
+            containerType: x.type,
+            containerCount: x.count,
+            efficiency: x.utilization,
+            totalCost: (CONTAINERS[x.type].costSea || 0) * x.count,
+            unusedCBM: (x.count * CONTAINERS[x.type].cbm) - totals.totalCBM,
+            totalCBM: totals.totalCBM,
+            containerCBM: CONTAINERS[x.type].cbm
+          })),
+          bestContainerChoice: best,
+          settings: { dimUnit, weightUnit, shippingMode },
+          timestamp: new Date().toLocaleString()
+        };
+        loadPlanGenerated = false;
+
+        renderSeaSummaryOnly(totals, best, seaPlan.all);
+        switchTab('optimization');
+        return;
+      }
+
+      // ROAD or others: keep old behavior
+      return originalCalc();
+
+    } catch(err){
+      console.error(err);
+      alert(err.message || 'Calculation error');
+    } finally {
+      btn.innerHTML = old;
+      btn.disabled = false;
+    }
+  };
+})();
+
+/* ---------- Renderers that keep your theme but show only what you asked ---------- */
+function renderAirSummaryOnly(totals, chargeable){
+  const out = document.getElementById('optimization-results');
+  out.style.display = 'block';
+
+  out.innerHTML = `
+    <div class="section-card">
+      <div class="section-title"><i class="fas fa-chart-bar"></i> Summary (Air Shipment)</div>
+      <div class="summary-stats">
+        <div class="stat-card">
+          <div class="stat-card-value">${totals.totalCBM}</div>
+          <div class="stat-card-label">Total CBM (m³)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-value">${totals.totalWeight}</div>
+          <div class="stat-card-label">Total Weight (kg)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-value">${totals.totalBoxes}</div>
+          <div class="stat-card-label">Total Boxes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-value">${chargeable.chargeableWeight}</div>
+          <div class="stat-card-label">Chargeable Weight (kg)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chargeable-card">
+      <div class="chargeable-header">
+        <i class="fas fa-weight-hanging"></i>
+        <span>Chargeable Weight (AIR)</span>
+      </div>
+      <div class="chargeable-comparison">
+        <div style="text-align:center;padding:15px;background:#fff;border-radius:8px;">
+          <div style="font-size:20px;font-weight:900;color:#ea580c;">${chargeable.actualWeight} kg</div>
+          <div style="font-size:12px;color:#64748b;">Actual Weight</div>
+        </div>
+        <div style="text-align:center;padding:15px;background:#fff;border-radius:8px;">
+          <div style="font-size:20px;font-weight:900;color:#ea580c;">${chargeable.volumetricWeight} kg</div>
+          <div style="font-size:12px;color:#64748b;">Volumetric Weight</div>
+          <small style="font-size:10px;">(CBM × ${VOLUMETRIC_FACTOR.air})</small>
+        </div>
+        <div style="text-align:center;padding:15px;background:#fb923c;border-radius:8px;color:white;">
+          <div style="font-size:20px;font-weight:900;">${chargeable.chargeableWeight} kg</div>
+          <div style="font-size:12px;">Chargeable Weight</div>
+          <small style="font-size:10px;">(${chargeable.weightType})</small>
+        </div>
+      </div>
+      <div style="margin-top:15px;padding:12px;background:#fed7aa;border-radius:8px;color:#9a3412;">
+        <i class="fas fa-info-circle"></i>
+        Container load plan is disabled for AIR shipment.
+      </div>
+    </div>
+  `;
+}
+
+function renderSeaSummaryOnly(totals, best, allCandidates){
+  const out = document.getElementById('optimization-results');
+  out.style.display = 'block';
+
+  // show ONLY totals + "No. of containers required" (by packing) + button to generate load plan
+  out.innerHTML = `
+    <div class="section-card">
+      <div class="section-title"><i class="fas fa-chart-bar"></i> Summary (Sea Shipment)</div>
+      <div class="summary-stats">
+        <div class="stat-card">
+          <div class="stat-card-value">${totals.totalCBM}</div>
+          <div class="stat-card-label">Total CBM (m³)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-value">${totals.totalWeight}</div>
+          <div class="stat-card-label">Total Weight (kg)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-value">${totals.totalBoxes}</div>
+          <div class="stat-card-label">Total Boxes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-value">${best.count}</div>
+          <div class="stat-card-label">Containers Required</div>
+        </div>
+      </div>
+
+      <div style="margin-top:15px;padding:12px;background:#f0fdf4;border-radius:10px;color:#0f5132;">
+        <i class="fas fa-check-circle"></i>
+        All boxes are packed (no unloaded boxes). Recommendation: <strong>${best.count} × ${best.label}</strong> (${best.utilization}% utilization)
+      </div>
+
+      <div class="action-buttons" style="margin-top:15px;">
+        <button class="btn btn-primary" id="generatePlanBtn">
+          <i class="fas fa-th-large"></i> Container Loading Optimization
+        </button>
+      </div>
+
+      <div style="color:#64748b;font-size:12px;text-align:center;">
+        Click to generate the mixed-box loading plan summary + PDF export.
+      </div>
+    </div>
+  `;
+
+  // keep candidates in memory for Part 2 generator to use
+  currentResults.optimizationCandidates = allCandidates;
+}
+
+/* ---------- Small safety: block paste of letters into number fields (optional, but requested) ---------- */
+(function allowPastingButSanitizeNumbers(){
+  document.addEventListener('input', (ev) => {
+    const t = ev.target;
+    if (!(t instanceof HTMLInputElement)) return;
+    if (t.type !== 'number') return;
+    // remove any non-digit except dot
+    const v = String(t.value);
+    const cleaned = v.replace(/[^0-9.]/g,'');
+    if (v !== cleaned) t.value = cleaned;
+  });
+})();
+</script>
+<!-- PART 4: Paste this at the VERY END of your existing <script> block (after Part 3).
+     This adds: SEA "Container Loading Optimization" -> generates mixed-box load plan (lightweight),
+     then shows "Export PDF" button that works on localhost.
+     NOTE: Uses html2pdf from CDN and avoids FontAwesome glyph warnings inside PDF by NOT embedding icons in PDF content.
+-->
+
+<script>
+/* ===========================
+   PART 4: Mixed-box SEA load plan + PDF export
+   - Only runs after SEA summary button click
+   - Generates a lightweight visual plan (no huge DOM)
+   - Ensures all boxes are assigned (no unloaded box)
+   =========================== */
+
+(function wireGeneratePlanButton(){
+  // Delegated listener because button is injected dynamically
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('#generatePlanBtn');
+    if (!btn) return;
+
+    if (!currentResults || !currentResults.boxes || !currentResults.bestContainerChoice){
+      alert('Please calculate first.');
+      return;
+    }
+
+    btn.disabled = true;
+    const old = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+    try{
+      // build plan
+      const plan = buildLoadPlan(currentResults.boxes, currentResults.bestContainerChoice.type);
+      if (!plan.ok) throw new Error(plan.reason);
+
+      currentResults.loadPlan = plan;
+      loadPlanGenerated = true;
+
+      // render plan (lightweight)
+      renderLoadPlanUI(plan);
+
+      // after plan render -> show export button
+      showExportPdfButton();
+
+    } catch(err){
+      console.error(err);
+      alert(err.message || 'Load plan error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = old;
+    }
+  });
+})();
+
+/* ---------- Basic mixed-box packing model ----------
+   We keep it fast:
+   - Each container is split into rows along LENGTH
+   - Each row is filled with "cells" across WIDTH (visual)
+   - Height stacking handled by "layers" (H)
+   - Rotation allowed only if NOT fragile (fragile-mode == yes => no rotation)
+*/
+function buildLoadPlan(stdBoxes, containerType){
+  const container = CONTAINERS[containerType];
+  if (!container) return { ok:false, reason:'Invalid container type' };
+
+  const fragile = (document.getElementById('fragile-mode')?.value === 'yes');
+  const allowRotate = !fragile;
+
+  // Expand to "units" but capped for performance (use counts for large)
+  // We'll represent placements as groups (boxType + count) per row.
+  const items = stdBoxes.map(b => ({
+    id: b.id,
+    desc: b.description,
+    dims: [b.length, b.width, b.height],
+    qty: b.quantity,
+    weight: b.weight
+  }));
+
+  // Simple heuristic: sort by base area (L*W) desc, then height desc
+  items.sort((a,b)=>{
+    const aa = a.dims[0]*a.dims[1], bb = b.dims[0]*b.dims[1];
+    if (bb!==aa) return bb-aa;
+    return b.dims[2]-a.dims[2];
+  });
+
+  // Container dimensions (meters)
+  const Lc = container.inner.L;
+  const Wc = container.inner.W;
+  const Hc = container.inner.H;
+
+  // row model: each row consumes some LENGTH. within row we allocate columns across WIDTH.
+  // We'll use "best fit" for width, and track max row height usage via stacking layers.
+  const containers = [];
+  let remaining = items.map(x=>({...x}));
+
+  // number of containers should match previously computed bestContainerChoice.count
+  const requiredContainers = currentResults.bestContainerChoice.count;
+
+  for (let c=1; c<=requiredContainers; c++){
+    const cont = {
+      index: c,
+      type: containerType,
+      rows: [],
+      usedLength: 0
+    };
+
+    // attempt to fill this container
+    let safety = 0;
+    while (safety++ < 5000){
+      // stop if nothing left
+      if (remaining.every(r=>r.qty<=0)) break;
+
+      // find next item that fits in remaining length
+      const freeLength = Lc - cont.usedLength;
+      if (freeLength <= 0.02) break;
+
+      // pick a candidate that can fit length-wise (possibly rotated)
+      let pick = null;
+      let pickOrient = null; // [L,W,H]
+      for (const it of remaining){
+        if (it.qty<=0) continue;
+
+        const orients = orientations(it.dims, allowRotate);
+        // pick orientation that fits L and W and H
+        const ok = orients.find(o => o[0] <= freeLength + 1e-9 && o[1] <= Wc + 1e-9 && o[2] <= Hc + 1e-9);
+        if (ok){
+          pick = it;
+          pickOrient = ok;
+          break;
+        }
+      }
+      if (!pick) break;
+
+      // create a new row for this chosen item with rowLength = pickOrient[0]
+      const rowLength = pickOrient[0];
+      const row = {
+        length: rowLength,
+        slots: [],  // placements across width
+        usedWidth: 0,
+        // stacking layers in height: how many can stack (floor(Hc / boxH))
+        layersMax: Math.max(1, Math.floor(Hc / pickOrient[2])),
+        layersUsed: 0
+      };
+
+      // fill row across width with best fit items
+      let freeWidth = Wc;
+      let rowSafety = 0;
+
+      // we try to fill by iterating remaining list (best-fit width)
+      while (rowSafety++ < 2000){
+        freeWidth = Wc - row.usedWidth;
+        if (freeWidth <= 0.02) break;
+
+        // pick next best item that fits within rowLength and freeWidth
+        let bestIt=null, bestO=null;
+        for (const it of remaining){
+          if (it.qty<=0) continue;
+          const orients = orientations(it.dims, allowRotate);
+
+          // must fit row length (<= rowLength) AND width <= freeWidth AND height <= Hc
+          // prefer same rowLength to keep stable rows
+          for (const o of orients){
+            if (o[0] <= rowLength + 1e-9 && o[1] <= freeWidth + 1e-9 && o[2] <= Hc + 1e-9){
+              bestIt = it; bestO = o;
+              break;
+            }
+          }
+          if (bestIt) break;
+        }
+        if (!bestIt) break;
+
+        // compute how many across width in this slot (columns) -> 1 slot per placement group
+        const colW = bestO[1];
+        const stackMax = Math.max(1, Math.floor(Hc / bestO[2]));
+        // we will place as many as possible in this column by stacking layers, limited by qty
+        const stackCount = Math.min(stackMax, bestIt.qty);
+
+        row.slots.push({
+          boxId: bestIt.id,
+          desc: bestIt.desc,
+          orient: bestO,
+          count: stackCount
+        });
+
+        bestIt.qty -= stackCount;
+        row.usedWidth += colW;
+
+        // track layers used for row (approx)
+        row.layersUsed = Math.max(row.layersUsed, stackCount);
+      }
+
+      // only add row if it contains something
+      if (row.slots.length === 0) break;
+
+      cont.rows.push(row);
+      cont.usedLength += rowLength;
+
+      // if container almost full length, stop
+      if (Lc - cont.usedLength <= 0.05) break;
+    }
+
+    containers.push(cont);
+  }
+
+  const leftover = remaining
+    .filter(r=>r.qty>0)
+    .map(r=>({ id:r.id, desc:r.desc, qty:r.qty }));
+
+  if (leftover.length > 0){
+    return { ok:false, reason:'Not all boxes could be placed by the load plan heuristic. Increase containers or reduce box count.', leftover };
+  }
+
+  return {
+    ok:true,
+    meta:{
+      name: (currentResults.report?.name || ''),
+      ref: (currentResults.report?.ref || ''),
+      timestamp: new Date().toLocaleString(),
+      containerType,
+      containerLabel: container.label,
+      containerCount: requiredContainers,
+      fragile: fragile ? 'Yes' : 'No',
+      allowRotate: allowRotate ? 'Yes' : 'No'
+    },
+    containers
+  };
+}
+
+function orientations(dims, allowRotate){
+  const [a,b,c] = dims;
+  const all = [
+    [a,b,c],
+    [b,a,c],
+    [a,c,b],
+    [c,a,b],
+    [b,c,a],
+    [c,b,a]
+  ];
+  // If no rotation allowed: keep only original
+  const uniq = [];
+  const seen = new Set();
+  const list = allowRotate ? all : [[a,b,c]];
+  for (const o of list){
+    const key = o.map(x=>x.toFixed(4)).join('|');
+    if (!seen.has(key)){
+      seen.add(key); uniq.push(o);
+    }
+  }
+  return uniq;
+}
+
+/* ---------- UI rendering (container look + door lines) ---------- */
+function renderLoadPlanUI(plan){
+  const out = document.getElementById('optimization-results');
+  if (!out) return;
+
+  // keep existing summary content at top; append plan below
+  const planHtml = `
+    <div class="section-card" id="load-plan-section">
+      <div class="section-title"><i class="fas fa-th-large"></i> Container Loading Plan</div>
+
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#64748b;font-size:12px;margin-bottom:12px;">
+        <div><strong>Name:</strong> ${escapeHtml(plan.meta.name || '-')}</div>
+        <div><strong>Ref:</strong> ${escapeHtml(plan.meta.ref || '-')}</div>
+        <div><strong>Date:</strong> ${escapeHtml(plan.meta.timestamp)}</div>
+        <div><strong>Rotation:</strong> ${plan.meta.allowRotate}</div>
+      </div>
+
+      ${plan.containers.map(c => renderOneContainer(c, plan.meta)).join('')}
+
+      <div style="margin-top:12px;padding:12px;background:#f0fdf4;border-radius:10px;color:#0f5132;font-size:13px;">
+        <i class="fas fa-check-circle"></i>
+        All boxes are assigned to containers. No unloaded boxes remain.
+      </div>
+    </div>
+  `;
+
+  // remove old plan section if exists
+  const old = document.getElementById('load-plan-section');
+  if (old) old.remove();
+
+  out.insertAdjacentHTML('beforeend', planHtml);
+}
+
+function renderOneContainer(containerObj, meta){
+  // Visual grid is simplified: each row shows slots as small blocks.
+  // No heavy giant tables.
+  const rows = containerObj.rows;
+  const maxRowsToShow = 25; // safety for performance
+  const trimmed = rows.slice(0, maxRowsToShow);
+  const hiddenCount = Math.max(0, rows.length - trimmed.length);
+
+  return `
+    <div style="margin-top:18px;">
+      <div style="font-weight:900;color:var(--primary);margin-bottom:8px;">
+        Container #${containerObj.index} — ${escapeHtml(meta.containerLabel)}
+      </div>
+
+      <div style="border:2px solid var(--border);border-radius:12px;padding:12px;position:relative;background:#fff;">
+        <!-- door lines (right side) -->
+        <div style="position:absolute;right:10px;top:10px;height:calc(100% - 20px);width:10px;display:flex;gap:3px;">
+          <div style="flex:1;border-left:2px solid #94a3b8;opacity:.7;"></div>
+          <div style="flex:1;border-left:2px solid #94a3b8;opacity:.7;"></div>
+        </div>
+
+        ${trimmed.map((r, idx)=>renderRow(r, idx+1)).join('')}
+
+        ${hiddenCount>0 ? `<div style="margin-top:10px;color:#64748b;font-size:12px;text-align:center;">
+          ${hiddenCount} more rows hidden to keep browser fast.
+        </div>` : ``}
+      </div>
+    </div>
+  `;
+}
+
+function renderRow(row, rowNo){
+  // slot blocks
+  const blocks = row.slots.map(s=>{
+    const label = `#${s.boxId} × ${s.count}`;
+    return `
+      <div title="${escapeHtml(s.desc)}" style="
+        padding:6px 8px;
+        border:1px solid var(--border);
+        border-radius:8px;
+        background:#f8fafc;
+        font-size:12px;
+        font-weight:800;
+        color:#334155;
+        white-space:nowrap;
+      ">${escapeHtml(label)}</div>
+    `;
+  }).join('');
+
+  return `
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;color:#64748b;font-size:12px;">
+        <div><strong>Row ${rowNo}:</strong> L=${row.length.toFixed(2)}m</div>
+        <div>Slots: ${row.slots.length}</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${blocks || '<div style="color:#94a3b8;font-size:12px;">Empty row</div>'}
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- PDF Export ---------- */
+function showExportPdfButton(){
+  // Only show after plan generated
+  const planSection = document.getElementById('load-plan-section');
+  if (!planSection) return;
+
+  // avoid duplicates
+  if (document.getElementById('exportPdfBtn')) return;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'action-buttons';
+  wrap.style.marginTop = '18px';
+  wrap.innerHTML = `
+    <button class="btn btn-success" id="exportPdfBtn">
+      <i class="fas fa-file-pdf"></i> Export Report (PDF)
+    </button>
+  `;
+  planSection.appendChild(wrap);
+
+  document.getElementById('exportPdfBtn').addEventListener('click', exportPlanToPdf);
+}
+
+// Load html2pdf if missing
+async function ensureHtml2Pdf(){
+  if (typeof window.html2pdf === 'function') return true;
+  await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js', 'html2pdf-lib');
+  return (typeof window.html2pdf === 'function');
+}
+
+async function exportPlanToPdf(){
+  if (!loadPlanGenerated || !currentResults?.loadPlan?.ok){
+    alert('Generate the load plan first.');
+    return;
+  }
+
+  const ok = await ensureHtml2Pdf();
+  if (!ok){
+    alert('PDF library failed to load. Check internet access on localhost.');
+    return;
+  }
+
+  // Build a clean PDF-only node (no FontAwesome icons to avoid glyph warnings)
+  const pdfNode = buildPdfNode(currentResults);
+
+  // filename
+  const name = (currentResults.report?.name || 'BDtradebot').replace(/[^\w\-]+/g,'_');
+  const ref  = (currentResults.report?.ref || '').replace(/[^\w\-]+/g,'_');
+  const file = ref ? `${name}_${ref}_LoadPlan.pdf` : `${name}_LoadPlan.pdf`;
+
+  // Use html2pdf options tuned for speed
+  const opt = {
+    margin:       10,
+    filename:     file,
+    image:        { type: 'jpeg', quality: 0.92 },
+    html2canvas:  { scale: 2, useCORS: true, logging: false },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  // generate
+  await window.html2pdf().set(opt).from(pdfNode).save();
+}
+
+function buildPdfNode(results){
+  const plan = results.loadPlan;
+  const totals = results.totals;
+
+  const wrapper = document.createElement('div');
+  wrapper.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+  wrapper.style.color = '#111827';
+  wrapper.style.fontSize = '12px';
+
+  // header
+  const header = document.createElement('div');
+  header.innerHTML = `
+    <div style="font-size:18px;font-weight:900;color:#006A4E;margin-bottom:6px;">BDtradebot - Container Loading Report</div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:10px;">
+      <div><strong>Name:</strong> ${escapeHtml(plan.meta.name || '-')}</div>
+      <div><strong>Ref:</strong> ${escapeHtml(plan.meta.ref || '-')}</div>
+      <div><strong>Date:</strong> ${escapeHtml(plan.meta.timestamp)}</div>
+      <div><strong>Container:</strong> ${escapeHtml(plan.meta.containerLabel)} × ${plan.meta.containerCount}</div>
+      <div><strong>Rotation Allowed:</strong> ${escapeHtml(plan.meta.allowRotate)}</div>
+    </div>
+    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:12px;background:#f9fafb;">
+      <div style="display:flex;gap:18px;flex-wrap:wrap;">
+        <div><strong>Total CBM:</strong> ${totals.totalCBM} m³</div>
+        <div><strong>Total Weight:</strong> ${totals.totalWeight} kg</div>
+        <div><strong>Total Boxes:</strong> ${totals.totalBoxes}</div>
+      </div>
+    </div>
+  `;
+  wrapper.appendChild(header);
+
+  // plan per container (text tables)
+  plan.containers.forEach(c=>{
+    const block = document.createElement('div');
+    block.style.marginBottom = '12px';
+    block.innerHTML = `
+      <div style="font-weight:900;color:#006A4E;margin:8px 0;">Container #${c.index}</div>
+      ${renderPdfContainerTable(c)}
+    `;
+    wrapper.appendChild(block);
+  });
+
+  // footer
+  const foot = document.createElement('div');
+  foot.style.marginTop = '10px';
+  foot.style.paddingTop = '8px';
+  foot.style.borderTop = '1px solid #e5e7eb';
+  foot.innerHTML = `<div style="color:#6b7280;">Generated by BDtradebot (localhost)</div>`;
+  wrapper.appendChild(foot);
+
+  return wrapper;
+}
+
+function renderPdfContainerTable(c){
+  // Compact table: Row #, Row length, Items list
+  const rows = c.rows.slice(0, 60); // cap
+  const trs = rows.map((r, i)=>{
+    const items = r.slots.map(s=>`#${s.boxId}×${s.count}`).join(', ');
+    return `
+      <tr>
+        <td style="border:1px solid #e5e7eb;padding:6px;width:60px;">${i+1}</td>
+        <td style="border:1px solid #e5e7eb;padding:6px;width:90px;">${r.length.toFixed(2)}m</td>
+        <td style="border:1px solid #e5e7eb;padding:6px;">${escapeHtml(items || '-')}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <table style="border-collapse:collapse;width:100%;font-size:11px;">
+      <thead>
+        <tr>
+          <th style="border:1px solid #e5e7eb;padding:6px;text-align:left;background:#f3f4f6;">Row</th>
+          <th style="border:1px solid #e5e7eb;padding:6px;text-align:left;background:#f3f4f6;">Row L</th>
+          <th style="border:1px solid #e5e7eb;padding:6px;text-align:left;background:#f3f4f6;">Loaded Items</th>
+        </tr>
+      </thead>
+      <tbody>${trs}</tbody>
+    </table>
+  `;
+}
+
+/* ---------- Helpers ---------- */
+function escapeHtml(s){
+  return String(s ?? '').replace(/[&<>"']/g, (m)=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
+}
+
+function loadScriptOnce(src, id){
+  return new Promise((resolve, reject)=>{
+    if (document.getElementById(id)) return resolve(true);
+    const s = document.createElement('script');
+    s.src = src;
+    s.id = id;
+    s.onload = ()=>resolve(true);
+    s.onerror = ()=>reject(new Error('Failed to load: '+src));
+    document.head.appendChild(s);
+  });
+}
+</script><!-- =======================
+(B) JS INSERTS
+Paste this JS at the VERY END of your existing <script> block
+(after Part 4).
+======================= -->
+
+<script>
+/* ===========================
+   PART 5: Flow rules + Sea-only report header
+   - Air: show chargeable weight ONLY; hide container count + load plan
+   - Sea: show container count; show "Container Loading Optimization" button
+   - Report header appears only when user goes to generate plan (SEA)
+   =========================== */
+
+(function enforceFlowRules(){
+  // when mode changes, re-render summary if available
+  const modeSel = document.getElementById('shipping-mode');
+  if (modeSel){
+    modeSel.addEventListener('change', ()=>{
+      if (currentResults){
+        // recompute chargeable with new mode
+        currentResults.chargeable = calculateChargeableWeight(currentResults.totals, modeSel.value);
+        currentResults.settings.shippingMode = modeSel.value;
+
+        // reset plan if switching modes
+        loadPlanGenerated = false;
+        currentResults.loadPlan = null;
+
+        // re-render optimization tab content if currently open
+        const active = document.querySelector('.tab.active')?.dataset?.tab;
+        if (active === 'optimization'){
+          renderOptimizationResults(
+            currentResults.optimizations,
+            currentResults.totals,
+            currentResults.chargeable
+          );
+        }
+        // shipping tab
+        const active2 = document.querySelector('.tab.active')?.dataset?.tab;
+        if (active2 === 'shipping'){
+          renderShippingEstimation(currentResults.chargeable, modeSel.value);
+        }
+      }
+    });
+  }
+})();
+
+/* Override calculateChargeableWeight to Air/Sea only */
+function calculateChargeableWeight(totals, shippingMode) {
+  // Only AIR + SEA supported per requirement
+  if (shippingMode !== 'air' && shippingMode !== 'sea') shippingMode = 'sea';
+
+  const factor = (shippingMode === 'air') ? 166.667 : 1000;
+  const volumetricWeight = totals.totalCBM * factor;
+  const actualWeight = totals.totalWeight;
+
+  const chargeableWeight = Math.max(volumetricWeight, actualWeight);
+  const weightType = volumetricWeight > actualWeight ? 'volumetric' : 'actual';
+
+  return {
+    volumetricWeight: parseFloat(volumetricWeight.toFixed(2)),
+    actualWeight: parseFloat(actualWeight.toFixed(2)),
+    chargeableWeight: parseFloat(chargeableWeight.toFixed(2)),
+    weightType,
+    difference: parseFloat(Math.abs(volumetricWeight - actualWeight).toFixed(2)),
+    factor
+  };
+}
+
+/* Update renderOptimizationResults to match flow:
+   - AIR: do NOT show containers + do NOT show plan button
+   - SEA: show containers required + show plan button (in summary section)
+*/
+const _renderOptimizationResults_orig = renderOptimizationResults;
+renderOptimizationResults = function(optimizations, totals, chargeable){
+  const mode = document.getElementById('shipping-mode')?.value || 'sea';
+
+  // call original to build base cards
+  _renderOptimizationResults_orig(optimizations, totals, chargeable);
+
+  const container = document.getElementById('optimization-results');
+  if (!container) return;
+
+  // show/hide report header card
+  const headerCard = document.getElementById('sea-report-header-card');
+  if (headerCard) headerCard.style.display = 'none';
+
+  // Remove any previous generated buttons/header leftovers
+  const oldBtn = container.querySelector('#generatePlanBtn');
+  if (oldBtn) oldBtn.remove();
+
+  // AIR: remove container option cards area + plan area if any
+  if (mode === 'air'){
+    // hide container options section if present
+    const trophies = container.querySelectorAll('.section-card');
+    trophies.forEach(sec=>{
+      const title = sec.querySelector('.section-title')?.innerText || '';
+      if (title.includes('Recommended Container Options') || title.includes('Container Loading Plan')){
+        sec.style.display = 'none';
+      }
+    });
+    // ensure export button gone
+    const exp = container.querySelector('#exportPdfBtn');
+    if (exp) exp.remove();
+    return;
+  }
+
+  // SEA: Show "Generate Plan" button near the container options section
+  // Also store the best option for plan generation
+  if (optimizations && optimizations.length){
+    const best = optimizations[0];
+    currentResults.bestContainerChoice = { type: best.containerType, count: best.containerCount };
+  }
+
+  // Find the "Recommended Container Options" section-card and append button
+  let targetCard = null;
+  container.querySelectorAll('.section-card').forEach(sec=>{
+    const title = sec.querySelector('.section-title')?.innerText || '';
+    if (title.includes('Recommended Container Options')) targetCard = sec;
+  });
+
+  if (targetCard){
+    const btnWrap = document.createElement('div');
+    btnWrap.className = 'action-buttons';
+    btnWrap.innerHTML = `
+      <button class="btn btn-primary" id="generatePlanBtn">
+        <i class="fas fa-th"></i> Container Loading Optimization
+      </button>
+    `;
+    targetCard.appendChild(btnWrap);
+  }
+};
+
+/* SEA: before generating plan, show report header card and store values */
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('#generatePlanBtn');
+  if (!btn) return;
+
+  const mode = document.getElementById('shipping-mode')?.value || 'sea';
+  if (mode !== 'sea') return;
+
+  const headerCard = document.getElementById('sea-report-header-card');
+  if (headerCard) headerCard.style.display = 'block';
+
+  const nm = document.getElementById('report-name');
+  const rf = document.getElementById('report-ref');
+
+  // store on currentResults for PDF
+  currentResults.report = {
+    name: (nm?.value || '').trim(),
+    ref: (rf?.value || '').trim()
+  };
+});
+
+/* Fix numeric fields: block letters/paste non-numeric.
+   (This is defensive; input type=number already helps)
+*/
+(function hardenNumericInputs(){
+  const numericSelector = 'input[type="number"], .box-length, .box-width, .box-height, .box-weight, .box-quantity';
+  document.addEventListener('keydown', (e)=>{
+    const t = e.target;
+    if (!t || !(t.matches && t.matches(numericSelector))) return;
+
+    // allow control keys
+    const allowed = [
+      'Backspace','Delete','Tab','Enter','Escape',
+      'ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'
+    ];
+    if (allowed.includes(e.key)) return;
+
+    // allow shortcuts
+    if (e.ctrlKey || e.metaKey) return;
+
+    // allow digits, dot, minus
+    const ok = /^[0-9.\-]$/.test(e.key);
+    if (!ok) e.preventDefault();
+  });
+
+  document.addEventListener('paste', (e)=>{
+    const t = e.target;
+    if (!t || !(t.matches && t.matches(numericSelector))) return;
+    const txt = (e.clipboardData || window.clipboardData).getData('text');
+    const cleaned = txt.replace(/[^\d.\-]/g,'');
+    if (cleaned !== txt){
+      e.preventDefault();
+      // insert cleaned
+      const start = t.selectionStart ?? t.value.length;
+      const end = t.selectionEnd ?? t.value.length;
+      t.value = t.value.slice(0,start) + cleaned + t.value.slice(end);
+      t.dispatchEvent(new Event('input', { bubbles:true }));
+    }
+  });
+})();
+</script>
+</body>
+</html>
 
